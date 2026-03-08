@@ -14,7 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      favorites: {
+        Row: {
+          backdrop_path: string | null
+          created_at: string
+          id: string
+          media_id: number
+          media_type: string
+          overview: string | null
+          poster_path: string | null
+          release_date: string | null
+          title: string
+          user_id: string
+          vote_average: number | null
+        }
+        Insert: {
+          backdrop_path?: string | null
+          created_at?: string
+          id?: string
+          media_id: number
+          media_type: string
+          overview?: string | null
+          poster_path?: string | null
+          release_date?: string | null
+          title: string
+          user_id: string
+          vote_average?: number | null
+        }
+        Update: {
+          backdrop_path?: string | null
+          created_at?: string
+          id?: string
+          media_id?: number
+          media_type?: string
+          overview?: string | null
+          poster_path?: string | null
+          release_date?: string | null
+          title?: string
+          user_id?: string
+          vote_average?: number | null
+        }
+        Relationships: []
+      }
+      watchlist: {
+        Row: {
+          backdrop_path: string | null
+          created_at: string
+          id: string
+          media_id: number
+          media_type: string
+          overview: string | null
+          poster_path: string | null
+          release_date: string | null
+          title: string
+          user_id: string
+          vote_average: number | null
+        }
+        Insert: {
+          backdrop_path?: string | null
+          created_at?: string
+          id?: string
+          media_id: number
+          media_type: string
+          overview?: string | null
+          poster_path?: string | null
+          release_date?: string | null
+          title: string
+          user_id: string
+          vote_average?: number | null
+        }
+        Update: {
+          backdrop_path?: string | null
+          created_at?: string
+          id?: string
+          media_id?: number
+          media_type?: string
+          overview?: string | null
+          poster_path?: string | null
+          release_date?: string | null
+          title?: string
+          user_id?: string
+          vote_average?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
