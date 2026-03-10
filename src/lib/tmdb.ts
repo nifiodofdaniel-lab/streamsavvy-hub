@@ -140,10 +140,10 @@ export type SearchResult = MediaItem | PersonResult;
 // Search with fuzzy fallback + actor support
 export async function searchMulti(query: string): Promise<MediaItem[]> {
   const data = await fetchTMDB("/search/multi", { query, include_adult: "false" });
-  const all = data.results as (MediaItem & { media_type: string })[];
+  const all = data.results as Array<Record<string, unknown> & { media_type: string }>;
 
   // Separate people vs media
-  const mediaResults = all.filter(r => r.media_type === "movie" || r.media_type === "tv") as MediaItem[];
+  const mediaResults = all.filter(r => r.media_type === "movie" || r.media_type === "tv") as unknown as MediaItem[];
   const personResults = all.filter(r => r.media_type === "person") as unknown as PersonResult[];
 
   // For each actor found, fetch their movie/tv credits
