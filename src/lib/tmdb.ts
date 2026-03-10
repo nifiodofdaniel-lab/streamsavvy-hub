@@ -125,10 +125,61 @@ export async function getSimilar(type: "movie" | "tv", id: number): Promise<Medi
   return data.results.slice(0, 12) as MediaItem[];
 }
 
-// Search
+// Person type for actor search results
+export type PersonResult = {
+  id: number;
+  name: string;
+  profile_path: string | null;
+  known_for: MediaItem[];
+  known_for_department: string;
+  media_type: "person";
+};
+
+export type SearchResult = MediaItem | PersonResult;
+
+// Search with fuzzy fallback + actor support
 export async function searchMulti(query: string): Promise<MediaItem[]> {
   const data = await fetchTMDB("/search/multi", { query, include_adult: "false" });
-  return (data.results as MediaItem[]).filter(r => r.media_type === "movie" || r.media_type === "tv");
+  const all = data.results as Array<Record<string, unknown> & { media_type: string }>;
+
+  // Separate people vs media
+  const mediaResults = all.filter(r => r.media_type === "movie" || r.media_type === "tv") as unknown as MediaItem[];
+  const personResults = all.filter(r => r.media_type === "person") as unknown as PersonResult[];
+
+  // For each actor found, fetch their movie/tv credits
+  const actorMediaSets = await Promise.all(
+    personResults.slice(0, 3).map(async (person) => {
+      try {
+        const credits = await fetchTMDB(`/person/${person.id}/combined_credits`);
+        return (credits.cast as (MediaItem & { media_type: string })[])
+          .filter(c => c.media_type === "movie" || c.media_type === "tv")
+          .sort((a, b) => (b.vote_average ?? 0) - (a.vote_average ?? 0))
+          .slice(0, 12) as MediaItem[];
+      } catch {
+        return [];
+      }
+    })
+  );
+
+  // Merge actor filmographies with direct results, deduplicate by id+type
+  const actorMedia = actorMediaSets.flat();
+  const combined = [...mediaResults, ...actorMedia];
+  const seen = new Set<string>();
+  const unique = combined.filter(item => {
+    const key = `${item.media_type}-${item.id}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  // If no results at all, try fuzzy: strip last char (typo tolerance)
+  if (unique.length === 0 && query.length > 3) {
+    const fuzzyQuery = query.slice(0, -1);
+    const fuzzyData = await fetchTMDB("/search/multi", { query: fuzzyQuery, include_adult: "false" });
+    return (fuzzyData.results as MediaItem[]).filter(r => r.media_type === "movie" || r.media_type === "tv");
+  }
+
+  return unique;
 }
 
 // Discover by year

@@ -5,7 +5,7 @@ import {
   getTitle, getReleaseYear, getBackdropUrl, getPosterUrl,
   MediaItem
 } from "@/lib/tmdb";
-import Navbar from "@/components/Navbar";
+import AppLayout from "@/components/AppLayout";
 import MediaRow from "@/components/MediaRow";
 import TrailerModal from "@/components/TrailerModal";
 import { useState } from "react";
@@ -61,15 +61,14 @@ export default function DetailPage({ mediaType }: Props) {
 
   if (isLoading || !detail) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="pt-16 flex items-center justify-center min-h-[60vh]">
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <div className="w-12 h-12 rounded-full border-2 border-gold border-t-transparent animate-spin mx-auto mb-4" />
             <p className="text-muted-foreground">Loading...</p>
           </div>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
@@ -104,11 +103,9 @@ export default function DetailPage({ mediaType }: Props) {
   const ratingColor = detail.vote_average >= 7.5 ? "text-green-400" : detail.vote_average >= 6 ? "text-yellow-400" : "text-red-400";
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-
+    <AppLayout>
       {/* Backdrop Hero */}
-      <div className="relative pt-16">
+      <div className="relative">
         <div className="relative h-[50vh] min-h-[350px] overflow-hidden">
           <img
             src={getBackdropUrl(detail.backdrop_path, "original")}
@@ -346,6 +343,6 @@ export default function DetailPage({ mediaType }: Props) {
           onClose={() => setTrailerKey(null)}
         />
       )}
-    </div>
+    </AppLayout>
   );
 }

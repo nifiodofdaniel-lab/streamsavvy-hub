@@ -1,7 +1,7 @@
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { searchMulti } from "@/lib/tmdb";
-import Navbar from "@/components/Navbar";
+import AppLayout from "@/components/AppLayout";
 import MediaCard from "@/components/MediaCard";
 import SkeletonCard from "@/components/SkeletonCard";
 import { Search } from "lucide-react";
@@ -18,9 +18,8 @@ export default function SearchPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="pt-24 px-4 sm:px-6 max-w-7xl mx-auto">
+    <AppLayout>
+      <div className="px-4 sm:px-6 py-8 max-w-7xl mx-auto">
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-1">
             <Search className="text-gold" size={24} />
@@ -66,6 +65,6 @@ export default function SearchPage() {
           </div>
         )}
       </div>
-    </div>
+    </AppLayout>
   );
 }
