@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getTrending, getPopular, getTopRated, getNowPlaying, getOnAir } from "@/lib/tmdb";
-import Navbar from "@/components/Navbar";
+import AppLayout from "@/components/AppLayout";
 import HeroSection from "@/components/HeroSection";
 import MediaRow from "@/components/MediaRow";
 
@@ -60,20 +60,17 @@ export default function Index() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="pt-16">
-        <HeroSection items={trendingAll} />
-        <div className="py-4">
-          <MediaRow title="🔥 Trending Movies Today" items={trendingMovies} mediaType="movie" isLoading={l2} />
-          <MediaRow title="📺 Trending Shows Today" items={trendingTV} mediaType="tv" isLoading={l3} />
-          <MediaRow title="🎬 Now Playing in Cinemas" items={nowPlaying} mediaType="movie" isLoading={l8} />
-          <MediaRow title="📡 Currently Airing" items={onAir} mediaType="tv" isLoading={l9} />
-          <MediaRow title="⭐ Popular Movies" items={popularMovies} mediaType="movie" isLoading={l4} />
-          <MediaRow title="🎭 Popular TV Shows" items={popularTV} mediaType="tv" isLoading={l5} />
-          <MediaRow title="🏆 Top Rated Movies" items={topRatedMovies} mediaType="movie" isLoading={l6} />
-          <MediaRow title="🏅 Top Rated TV Shows" items={topRatedTV} mediaType="tv" isLoading={l7} />
-        </div>
+    <AppLayout>
+      <HeroSection items={trendingAll} />
+      <div className="py-4">
+        <MediaRow title="🔥 Trending Movies Today" items={trendingMovies} mediaType="movie" isLoading={l2} />
+        <MediaRow title="📺 Trending Shows Today" items={trendingTV} mediaType="tv" isLoading={l3} />
+        <MediaRow title="🎬 Now Playing in Cinemas" items={nowPlaying} mediaType="movie" isLoading={l8} />
+        <MediaRow title="📡 Currently Airing" items={onAir} mediaType="tv" isLoading={l9} />
+        <MediaRow title="⭐ Popular Movies" items={popularMovies} mediaType="movie" isLoading={l4} />
+        <MediaRow title="🎭 Popular TV Shows" items={popularTV} mediaType="tv" isLoading={l5} />
+        <MediaRow title="🏆 Top Rated Movies" items={topRatedMovies} mediaType="movie" isLoading={l6} />
+        <MediaRow title="🏅 Top Rated TV Shows" items={topRatedTV} mediaType="tv" isLoading={l7} />
       </div>
       <footer className="border-t border-border/30 mt-8 py-8 text-center text-muted-foreground text-sm">
         <p>
@@ -84,6 +81,6 @@ export default function Index() {
           · CineTrack &copy; {new Date().getFullYear()}
         </p>
       </footer>
-    </div>
+    </AppLayout>
   );
 }
