@@ -343,6 +343,6 @@ export default function DetailPage({ mediaType }: Props) {
           onClose={() => setTrailerKey(null)}
         />
       )}
-    </div>
+    </AppLayout>
   );
 }
