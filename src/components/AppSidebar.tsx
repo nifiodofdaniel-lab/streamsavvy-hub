@@ -35,8 +35,8 @@ export default function AppSidebar({ onCollapsedChange }: Props) {
     <>
       <aside
         className={cn(
-          "fixed left-0 top-0 h-screen z-50 flex flex-col transition-all duration-300 border-r border-border/40",
-          "bg-sidebar",
+          "fixed left-0 top-0 h-screen z-50 flex flex-col transition-all duration-300 border-r border-border/60",
+          "bg-card shadow-xl",
           collapsed ? "w-16" : "w-60"
         )}
       >
