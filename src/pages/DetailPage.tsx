@@ -5,7 +5,7 @@ import {
   getTitle, getReleaseYear, getBackdropUrl, getPosterUrl,
   MediaItem
 } from "@/lib/tmdb";
-import Navbar from "@/components/Navbar";
+import AppLayout from "@/components/AppLayout";
 import MediaRow from "@/components/MediaRow";
 import TrailerModal from "@/components/TrailerModal";
 import { useState } from "react";
