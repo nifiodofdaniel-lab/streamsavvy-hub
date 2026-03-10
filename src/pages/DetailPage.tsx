@@ -103,11 +103,9 @@ export default function DetailPage({ mediaType }: Props) {
   const ratingColor = detail.vote_average >= 7.5 ? "text-green-400" : detail.vote_average >= 6 ? "text-yellow-400" : "text-red-400";
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-
+    <AppLayout>
       {/* Backdrop Hero */}
-      <div className="relative pt-16">
+      <div className="relative">
         <div className="relative h-[50vh] min-h-[350px] overflow-hidden">
           <img
             src={getBackdropUrl(detail.backdrop_path, "original")}
