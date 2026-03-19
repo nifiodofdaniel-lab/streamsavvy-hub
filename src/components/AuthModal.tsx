@@ -44,7 +44,11 @@ export default function AuthModal({ onClose }: Props) {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       if (error) {
-        toast.error(error.message);
+        if (error.message.toLowerCase().includes("load failed") || error.message.toLowerCase().includes("failed to fetch")) {
+          toast.error("Network error — please check your connection and try again.");
+        } else {
+          toast.error(error.message);
+        }
       } else {
         setForgotSent(true);
       }
