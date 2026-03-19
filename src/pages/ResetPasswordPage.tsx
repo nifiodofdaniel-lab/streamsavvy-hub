@@ -13,17 +13,26 @@ export default function ResetPasswordPage() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Supabase appends the recovery token in the URL hash
+    // Supabase sends the recovery token either in the URL hash or as a query param (PKCE flow)
     const hash = window.location.hash;
-    if (hash.includes("type=recovery")) {
+    const params = new URLSearchParams(window.location.search);
+
+    if (hash.includes("type=recovery") || params.get("type") === "recovery") {
       setReady(true);
-    } else {
-      // Wait for the auth state change that fires when the recovery link is used
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-        if (event === "PASSWORD_RECOVERY") setReady(true);
-      });
-      return () => subscription.unsubscribe();
+      return;
     }
+
+    // Also listen for the PASSWORD_RECOVERY auth event (fires when Supabase detects the token)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") setReady(true);
+    });
+
+    // Give Supabase a moment to process the URL token on page load
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setReady(true);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

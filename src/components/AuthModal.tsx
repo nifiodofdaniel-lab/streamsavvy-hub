@@ -39,8 +39,10 @@ export default function AuthModal({ onClose }: Props) {
         onClose();
       }
     } else if (mode === "forgot") {
+      // Build the redirect URL pointing to our reset-password page
+      const redirectTo = `${window.location.origin}/reset-password`;
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo,
       });
       if (error) {
         toast.error(error.message);
