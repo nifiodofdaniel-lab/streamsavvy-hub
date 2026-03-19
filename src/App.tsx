@@ -10,6 +10,7 @@ import SearchPage from "./pages/SearchPage";
 import SavedPage from "./pages/SavedPage";
 import FavoritesPage from "./pages/FavoritesPage";
 import NotFound from "./pages/NotFound";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/search" element={<SearchPage />} />
             <Route path="/saved" element={<SavedPage />} />
             <Route path="/favorites" element={<FavoritesPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
