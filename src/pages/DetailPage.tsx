@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   getDetail, getVideos, getWatchProviders, getCredits, getSimilar,
@@ -22,6 +22,7 @@ type Props = { mediaType: "movie" | "tv" };
 
 export default function DetailPage({ mediaType }: Props) {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const numId = Number(id);
   const [trailerKey, setTrailerKey] = useState<string | null>(null);
   const { user } = useAuth();
@@ -104,6 +105,25 @@ export default function DetailPage({ mediaType }: Props) {
 
   return (
     <AppLayout>
+      {/* Fixed floating back button */}
+      <button
+        onClick={() => navigate(-1)}
+        style={{ animation: "backBtnFadeIn 300ms ease forwards" }}
+        className="fixed top-5 left-5 z-[1000] inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-foreground hover:text-gold transition-colors"
+        aria-label="Go back"
+      >
+        <span
+          className="absolute inset-0 rounded-lg"
+          style={{
+            background: "rgba(0,0,0,0.55)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+          }}
+        />
+        <ChevronLeft size={16} className="relative shrink-0" />
+        <span className="relative hidden sm:inline">Back</span>
+      </button>
+
       {/* Backdrop Hero */}
       <div className="relative">
         <div className="relative h-[50vh] min-h-[350px] overflow-hidden">
@@ -118,10 +138,6 @@ export default function DetailPage({ mediaType }: Props) {
 
         {/* Main content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 -mt-32 relative z-10">
-          <Link to={-1 as unknown as string} className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 text-sm transition-colors">
-            <ChevronLeft size={16} />
-            Back
-          </Link>
 
           <div className="flex flex-col sm:flex-row gap-6 lg:gap-10">
             {/* Poster */}
