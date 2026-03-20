@@ -88,7 +88,7 @@ export default function AppLayout({ children }: Props) {
   };
 
   const getThumb = (item: SuggestionItem): string => {
-    if (item.media_type === "person") {
+    if ((item.media_type as string) === "person") {
       const path = (item as any).profile_path as string | null;
       return path ? `${IMG_BASE}/w92${path}` : "/placeholder.svg";
     }
