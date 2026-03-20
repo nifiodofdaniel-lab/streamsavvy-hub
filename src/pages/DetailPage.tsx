@@ -22,6 +22,7 @@ type Props = { mediaType: "movie" | "tv" };
 
 export default function DetailPage({ mediaType }: Props) {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const numId = Number(id);
   const [trailerKey, setTrailerKey] = useState<string | null>(null);
   const { user } = useAuth();
