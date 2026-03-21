@@ -109,7 +109,7 @@ export default function DetailPage({ mediaType }: Props) {
       <button
         onClick={() => navigate(-1)}
         style={{ animation: "backBtnFadeIn 300ms ease forwards" }}
-        className="fixed bottom-8 left-6 z-[1000] inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-foreground hover:text-gold transition-colors"
+        className="fixed top-4 right-4 z-[1000] inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-foreground hover:text-gold transition-colors"
         aria-label="Go back"
       >
         <span
