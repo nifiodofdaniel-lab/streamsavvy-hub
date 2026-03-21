@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Film, Tv, User } from "lucide-react";
+import { Search, Film, Tv, User, Menu } from "lucide-react";
 import AppSidebar from "./AppSidebar";
 import { cn } from "@/lib/utils";
 import { searchMulti, getPosterUrl, getTitle, MediaItem } from "@/lib/tmdb";
@@ -20,7 +20,7 @@ export default function AppLayout({ children }: Props) {
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -38,19 +38,14 @@ export default function AppLayout({ children }: Props) {
       return;
     }
     setIsLoadingSuggestions(true);
-    searchMulti(debouncedQuery)
-      .then((results) => {
-        // Include persons from the raw API — re-fetch raw to get person results with profile_path
-        fetchRawSuggestions(debouncedQuery).then((raw) => {
-          setSuggestions(raw.slice(0, 8));
-          setShowDropdown(true);
-          setIsLoadingSuggestions(false);
-        });
-      })
-      .catch(() => {
-        setSuggestions([]);
-        setIsLoadingSuggestions(false);
-      });
+    fetchRawSuggestions(debouncedQuery).then((raw) => {
+      setSuggestions(raw.slice(0, 8));
+      setShowDropdown(true);
+      setIsLoadingSuggestions(false);
+    }).catch(() => {
+      setSuggestions([]);
+      setIsLoadingSuggestions(false);
+    });
   }, [debouncedQuery]);
 
   // Click outside closes dropdown
@@ -63,6 +58,12 @@ export default function AppLayout({ children }: Props) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Lock body scroll when menu is open
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [menuOpen]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,7 +82,6 @@ export default function AppLayout({ children }: Props) {
     } else if (item.media_type === "tv") {
       navigate(`/tv/${item.id}`);
     } else {
-      // person — search by their name
       const name = (item as any).name || "";
       navigate(`/search?q=${encodeURIComponent(name)}`);
     }
@@ -123,109 +123,116 @@ export default function AppLayout({ children }: Props) {
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <AppSidebar onCollapsedChange={setSidebarCollapsed} />
+    <div className="min-h-screen bg-background">
+      {/* Fullscreen overlay sidebar */}
+      <AppSidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
 
-      <div
-        className={cn(
-          "flex-1 flex flex-col min-w-0 transition-all duration-300",
-          sidebarCollapsed ? "pl-16" : "pl-60"
-        )}
-      >
-        {/* Top search bar */}
-        <header className="sticky top-0 z-30 h-16 flex items-center px-4 sm:px-6 bg-background/80 backdrop-blur-md border-b border-border/30">
-          <div ref={containerRef} className="w-full max-w-xl relative">
-            <form onSubmit={handleSearch}>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={15} />
-                <input
-                  type="text"
-                  placeholder="Search movies, shows, actors..."
-                  value={searchQuery}
-                  onChange={e => {
-                    setSearchQuery(e.target.value);
-                    if (!e.target.value.trim()) setShowDropdown(false);
-                  }}
-                  onFocus={() => {
-                    if (suggestions.length > 0) setShowDropdown(true);
-                  }}
-                  className="w-full bg-muted/40 border border-border/50 rounded-full pl-9 pr-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/60 focus:bg-muted/60 transition-all"
-                />
-                {isLoadingSuggestions && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="w-3 h-3 border border-muted-foreground/40 border-t-gold rounded-full animate-spin" />
-                  </div>
-                )}
-              </div>
-            </form>
+      {/* Sticky header */}
+      <header className="sticky top-0 z-30 h-18 flex items-center px-6 sm:px-8 bg-background/85 backdrop-blur-xl border-b border-border/20">
+        {/* Hamburger */}
+        <button
+          onClick={() => setMenuOpen(true)}
+          aria-label="Open menu"
+          className="mr-5 p-2 rounded-xl hover:bg-muted/60 transition-colors text-foreground hover:text-gold"
+        >
+          <Menu size={22} />
+        </button>
 
-            {/* Dropdown */}
-            {showDropdown && suggestions.length > 0 && (
-              <div className="absolute top-full mt-2 left-0 right-0 bg-card border border-border/60 rounded-xl shadow-2xl overflow-hidden z-50">
-                <ul>
-                  {suggestions.map((item, idx) => (
-                    <li key={`${item.media_type}-${item.id}-${idx}`}>
-                      <button
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          handleSuggestionClick(item);
-                        }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-muted/60 transition-colors text-left group"
-                      >
-                        {/* Thumbnail */}
-                        <div className="w-9 h-12 flex-shrink-0 rounded-md overflow-hidden bg-muted">
-                          <img
-                            src={getThumb(item)}
-                            alt={getDisplayTitle(item)}
-                            className="w-full h-full object-cover"
-                            onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg"; }}
-                          />
-                        </div>
-
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-foreground font-medium truncate group-hover:text-gold transition-colors">
-                            {getDisplayTitle(item)}
-                          </p>
-                          {getYear(item) && (
-                            <p className="text-xs text-muted-foreground">{getYear(item)}</p>
-                          )}
-                        </div>
-
-                        {/* Type badge */}
-                        <span className={cn(
-                          "flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0",
-                          getLabelColor(item)
-                        )}>
-                          {getLabelIcon(item)}
-                          {getLabel(item)}
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-                <div className="px-3 py-2 border-t border-border/40">
-                  <button
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      setShowDropdown(false);
-                      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-                      setSearchQuery("");
-                    }}
-                    className="text-xs text-muted-foreground hover:text-gold transition-colors w-full text-left"
-                  >
-                    Press Enter to see all results for <span className="text-gold font-medium">"{searchQuery}"</span>
-                  </button>
-                </div>
-              </div>
-            )}
+        {/* Logo */}
+        <div className="flex items-center gap-2.5 mr-8 shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-gold/15 flex items-center justify-center">
+            <Film className="text-gold" size={17} />
           </div>
-        </header>
+          <span className="font-display text-xl text-gold tracking-wider hidden sm:block">CINETRACK</span>
+        </div>
 
-        <main className="flex-1">
-          {children}
-        </main>
-      </div>
+        {/* Search */}
+        <div ref={containerRef} className="flex-1 max-w-lg relative">
+          <form onSubmit={handleSearch}>
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={15} />
+              <input
+                type="text"
+                placeholder="Search movies, shows, actors…"
+                value={searchQuery}
+                onChange={e => {
+                  setSearchQuery(e.target.value);
+                  if (!e.target.value.trim()) setShowDropdown(false);
+                }}
+                onFocus={() => {
+                  if (suggestions.length > 0) setShowDropdown(true);
+                }}
+                className="w-full bg-muted/50 border border-border/40 rounded-full pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/50 focus:bg-muted/70 transition-all"
+              />
+              {isLoadingSuggestions && (
+                <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+                  <div className="w-3.5 h-3.5 border border-muted-foreground/40 border-t-gold rounded-full animate-spin" />
+                </div>
+              )}
+            </div>
+          </form>
+
+          {/* Autocomplete dropdown */}
+          {showDropdown && suggestions.length > 0 && (
+            <div className="absolute top-full mt-2 left-0 right-0 bg-card border border-border/40 rounded-2xl shadow-2xl overflow-hidden z-50">
+              <ul>
+                {suggestions.map((item, idx) => (
+                  <li key={`${item.media_type}-${item.id}-${idx}`}>
+                    <button
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleSuggestionClick(item);
+                      }}
+                      className="w-full flex items-center gap-3.5 px-4 py-3 hover:bg-muted/50 transition-colors text-left group"
+                    >
+                      <div className="w-10 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
+                        <img
+                          src={getThumb(item)}
+                          alt={getDisplayTitle(item)}
+                          className="w-full h-full object-cover"
+                          onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg"; }}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-foreground font-medium truncate group-hover:text-gold transition-colors">
+                          {getDisplayTitle(item)}
+                        </p>
+                        {getYear(item) && (
+                          <p className="text-xs text-muted-foreground mt-0.5">{getYear(item)}</p>
+                        )}
+                      </div>
+                      <span className={cn(
+                        "flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0",
+                        getLabelColor(item)
+                      )}>
+                        {getLabelIcon(item)}
+                        {getLabel(item)}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <div className="px-4 py-2.5 border-t border-border/30">
+                <button
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setShowDropdown(false);
+                    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                    setSearchQuery("");
+                  }}
+                  className="text-xs text-muted-foreground hover:text-gold transition-colors w-full text-left"
+                >
+                  Press Enter to see all results for <span className="text-gold font-medium">"{searchQuery}"</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </header>
+
+      <main className="flex-1">
+        {children}
+      </main>
     </div>
   );
 }
