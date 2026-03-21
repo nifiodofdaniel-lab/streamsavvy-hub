@@ -14,8 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["'Bebas Neue'", "sans-serif"],
-        sans: ["Inter", "sans-serif"],
+        display: ["'DM Serif Display'", "Georgia", "serif"],
+        sans: ["'DM Sans'", "system-ui", "sans-serif"],
+        body: ["'DM Sans'", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -67,6 +68,12 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "1rem",
+        "2xl": "1.25rem",
+      },
+      spacing: {
+        18: "4.5rem",
+        22: "5.5rem",
       },
       keyframes: {
         "accordion-down": {
