@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Film, Home, Bookmark, Heart, Search, LogOut, User, LogIn, ChevronLeft, ChevronRight } from "lucide-react";
+import { Film, Home, Bookmark, Heart, Search, LogOut, User, LogIn, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import AuthModal from "./AuthModal";
 import { cn } from "@/lib/utils";
@@ -13,124 +13,133 @@ const navItems = [
 ];
 
 interface Props {
-  onCollapsedChange?: (collapsed: boolean) => void;
+  open: boolean;
+  onClose: () => void;
 }
 
-export default function AppSidebar({ onCollapsedChange }: Props) {
+export default function AppSidebar({ open, onClose }: Props) {
   const { user, signOut } = useAuth();
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
+  const [animating, setAnimating] = useState(false);
+  const [visible, setVisible] = useState(false);
 
   const isActive = (path: string) =>
     path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
 
-  const toggle = () => {
-    const next = !collapsed;
-    setCollapsed(next);
-    onCollapsedChange?.(next);
-  };
+  // Close menu when route changes
+  useEffect(() => {
+    if (open) onClose();
+  }, [location.pathname]);
+
+  // Animate in/out
+  useEffect(() => {
+    if (open) {
+      setVisible(true);
+      setAnimating(false);
+    } else if (visible) {
+      setAnimating(true);
+      const t = setTimeout(() => {
+        setVisible(false);
+        setAnimating(false);
+      }, 300);
+      return () => clearTimeout(t);
+    }
+  }, [open]);
+
+  const handleNavClick = () => onClose();
+
+  if (!visible) return showAuth ? <AuthModal onClose={() => setShowAuth(false)} /> : null;
 
   return (
     <>
-      <aside
+      {/* Backdrop */}
+      <div
         className={cn(
-          "fixed left-0 top-0 h-screen z-50 flex flex-col transition-all duration-300 border-r border-border/60",
-          "bg-card shadow-xl",
-          collapsed ? "w-16" : "w-60"
+          "fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm transition-opacity duration-300",
+          animating ? "opacity-0" : "opacity-100"
         )}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* Fullscreen overlay panel */}
+      <div
+        className={cn(
+          "fixed inset-0 z-[100] flex flex-col bg-background",
+          animating ? "menu-overlay-exit" : "menu-overlay-enter"
+        )}
+        role="dialog"
+        aria-modal="true"
       >
-        {/* Logo */}
-        <div className={cn(
-          "flex items-center h-16 border-b border-border/40 shrink-0",
-          collapsed ? "justify-center px-3" : "gap-3 px-4"
-        )}>
-          <div className="w-8 h-8 rounded-lg bg-gold/20 flex items-center justify-center shrink-0">
-            <Film className="text-gold" size={18} />
+        {/* Header */}
+        <div className="flex items-center justify-between px-8 py-7 border-b border-border/20">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gold/15 flex items-center justify-center">
+              <Film className="text-gold" size={20} />
+            </div>
+            <span className="font-display text-2xl text-gold tracking-wider">CINETRACK</span>
           </div>
-          {!collapsed && (
-            <span className="font-display text-xl text-gold tracking-widest">CINETRACK</span>
-          )}
+          <button
+            onClick={onClose}
+            aria-label="Close menu"
+            className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-muted/60 transition-colors text-foreground hover:text-gold"
+          >
+            <X size={24} />
+          </button>
         </div>
 
         {/* Nav links */}
-        <nav className="flex-1 py-4 flex flex-col gap-1 px-2 overflow-y-auto">
+        <nav className="flex-1 flex flex-col justify-center px-8 gap-2">
           {navItems.map(({ to, icon: Icon, label }) => (
             <Link
               key={to}
               to={to}
+              onClick={handleNavClick}
               className={cn(
-                "flex items-center gap-3 rounded-lg py-2.5 text-sm font-medium transition-all",
-                collapsed ? "justify-center px-2" : "px-3",
+                "flex items-center gap-5 py-5 px-6 rounded-2xl text-xl font-medium transition-all duration-200",
                 isActive(to)
-                  ? "bg-gold/15 text-gold"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-foreground"
+                  ? "bg-gold/12 text-gold"
+                  : "text-foreground hover:bg-muted/50 hover:text-gold"
               )}
-              title={collapsed ? label : undefined}
             >
-              <Icon size={18} className="shrink-0" />
-              {!collapsed && <span>{label}</span>}
+              <Icon size={24} className="shrink-0" />
+              <span style={{ lineHeight: 1.8 }}>{label}</span>
             </Link>
           ))}
         </nav>
 
         {/* User section */}
-        <div className="border-t border-border/40 p-2 flex flex-col gap-1 shrink-0">
+        <div className="px-8 py-8 border-t border-border/20">
           {user ? (
-            <>
-              <div className={cn(
-                "flex items-center gap-2 px-3 py-2 rounded-lg bg-sidebar-accent/50",
-                collapsed && "justify-center px-2"
-              )}>
-                <div className="w-6 h-6 rounded-full bg-gold/20 flex items-center justify-center shrink-0">
-                  <User size={12} className="text-gold" />
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-4 px-6 py-4 rounded-2xl bg-muted/40">
+                <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center shrink-0">
+                  <User size={18} className="text-gold" />
                 </div>
-                {!collapsed && (
-                  <span className="text-xs text-sidebar-foreground truncate flex-1">
-                    {user.email?.split("@")[0]}
-                  </span>
-                )}
+                <span className="text-base text-foreground font-medium truncate">
+                  {user.email?.split("@")[0]}
+                </span>
               </div>
               <button
-                onClick={signOut}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg py-2.5 text-sm font-medium transition-all",
-                  collapsed ? "justify-center px-2" : "px-3",
-                  "text-sidebar-foreground hover:bg-destructive/15 hover:text-destructive"
-                )}
-                title={collapsed ? "Sign out" : undefined}
+                onClick={() => { signOut(); onClose(); }}
+                className="flex items-center gap-4 px-6 py-4 rounded-2xl text-lg font-medium text-foreground hover:bg-destructive/15 hover:text-destructive transition-all"
               >
-                <LogOut size={18} className="shrink-0" />
-                {!collapsed && <span>Sign out</span>}
+                <LogOut size={22} className="shrink-0" />
+                <span>Sign out</span>
               </button>
-            </>
+            </div>
           ) : (
             <button
-              onClick={() => setShowAuth(true)}
-              className={cn(
-                "flex items-center gap-3 rounded-lg py-2.5 text-sm font-medium transition-all",
-                collapsed ? "justify-center px-2" : "px-3",
-                "bg-gold/15 text-gold hover:bg-gold/25"
-              )}
-              title={collapsed ? "Sign in" : undefined}
+              onClick={() => { setShowAuth(true); onClose(); }}
+              className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-lg font-medium bg-gold/12 text-gold hover:bg-gold/20 transition-all"
             >
-              <LogIn size={18} className="shrink-0" />
-              {!collapsed && <span>Sign In</span>}
+              <LogIn size={22} className="shrink-0" />
+              <span>Sign In</span>
             </button>
           )}
         </div>
-
-        {/* Collapse toggle */}
-        <button
-          onClick={toggle}
-          className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-sidebar border border-border/60 flex items-center justify-center hover:bg-sidebar-accent transition-colors z-10 shadow-sm"
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {collapsed
-            ? <ChevronRight size={12} className="text-sidebar-foreground" />
-            : <ChevronLeft size={12} className="text-sidebar-foreground" />}
-        </button>
-      </aside>
+      </div>
 
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
     </>
