@@ -63,14 +63,14 @@ export default function Index() {
     <AppLayout>
       <HeroSection items={trendingAll} />
       <div className="py-4">
-        <MediaRow title="🔥 Trending Movies Today" items={trendingMovies} mediaType="movie" isLoading={l2} />
-        <MediaRow title="📺 Trending Shows Today" items={trendingTV} mediaType="tv" isLoading={l3} />
-        <MediaRow title="🎬 Now Playing in Cinemas" items={nowPlaying} mediaType="movie" isLoading={l8} />
-        <MediaRow title="📡 Currently Airing" items={onAir} mediaType="tv" isLoading={l9} />
-        <MediaRow title="⭐ Popular Movies" items={popularMovies} mediaType="movie" isLoading={l4} />
-        <MediaRow title="🎭 Popular TV Shows" items={popularTV} mediaType="tv" isLoading={l5} />
-        <MediaRow title="🏆 Top Rated Movies" items={topRatedMovies} mediaType="movie" isLoading={l6} />
-        <MediaRow title="🏅 Top Rated TV Shows" items={topRatedTV} mediaType="tv" isLoading={l7} />
+        <MediaRow title="🔥 Trending Movies Today" items={trendingMovies} mediaType="movie" isLoading={l2} sectionId="trending-movies" />
+        <MediaRow title="📺 Trending Shows Today" items={trendingTV} mediaType="tv" isLoading={l3} sectionId="trending-tv" />
+        <MediaRow title="🎬 Now Playing in Cinemas" items={nowPlaying} mediaType="movie" isLoading={l8} sectionId="now-playing" />
+        <MediaRow title="📡 Currently Airing" items={onAir} mediaType="tv" isLoading={l9} sectionId="on-air" />
+        <MediaRow title="⭐ Popular Movies" items={popularMovies} mediaType="movie" isLoading={l4} sectionId="popular-movies" />
+        <MediaRow title="🎭 Popular TV Shows" items={popularTV} mediaType="tv" isLoading={l5} sectionId="popular-tv" />
+        <MediaRow title="🏆 Top Rated Movies" items={topRatedMovies} mediaType="movie" isLoading={l6} sectionId="top-rated-movies" />
+        <MediaRow title="🏅 Top Rated TV Shows" items={topRatedTV} mediaType="tv" isLoading={l7} sectionId="top-rated-tv" />
       </div>
       <footer className="border-t border-border/30 mt-8 py-8 text-center text-muted-foreground text-sm">
         <p>
