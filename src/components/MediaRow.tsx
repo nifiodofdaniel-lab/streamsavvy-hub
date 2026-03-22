@@ -1,7 +1,8 @@
 import { useRef } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronRight as ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import MediaCard from "./MediaCard";
-import { MediaItem } from "@/lib/tmdb";
+import { MediaItem, SectionId } from "@/lib/tmdb";
 import SkeletonCard from "./SkeletonCard";
 
 type Props = {
@@ -9,6 +10,7 @@ type Props = {
   items: MediaItem[];
   mediaType: "movie" | "tv" | "mixed";
   isLoading?: boolean;
+  sectionId?: SectionId;
 };
 
 export default function MediaRow({ title, items, mediaType, isLoading }: Props) {

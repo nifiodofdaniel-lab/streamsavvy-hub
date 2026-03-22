@@ -215,3 +215,65 @@ export function getRatingColor(rating: number): string {
   if (rating >= 6) return "text-yellow-400";
   return "text-red-400";
 }
+
+// ── Section page config ────────────────────────────────────────────────────
+
+export type SectionId =
+  | "trending-movies"
+  | "trending-tv"
+  | "now-playing"
+  | "on-air"
+  | "popular-movies"
+  | "popular-tv"
+  | "top-rated-movies"
+  | "top-rated-tv";
+
+export const SECTION_META: Record<SectionId, { title: string; mediaType: "movie" | "tv" }> = {
+  "trending-movies":  { title: "🔥 Trending Movies Today",     mediaType: "movie" },
+  "trending-tv":      { title: "📺 Trending Shows Today",       mediaType: "tv"    },
+  "now-playing":      { title: "🎬 Now Playing in Cinemas",     mediaType: "movie" },
+  "on-air":           { title: "📡 Currently Airing",           mediaType: "tv"    },
+  "popular-movies":   { title: "⭐ Popular Movies",             mediaType: "movie" },
+  "popular-tv":       { title: "🎭 Popular TV Shows",           mediaType: "tv"    },
+  "top-rated-movies": { title: "🏆 Top Rated Movies",           mediaType: "movie" },
+  "top-rated-tv":     { title: "🏅 Top Rated TV Shows",         mediaType: "tv"    },
+};
+
+export async function getSectionPage(sectionId: SectionId, page: number): Promise<{ results: MediaItem[]; totalPages: number }> {
+  const p = String(page);
+  let endpoint = "";
+  let params: Record<string, string> = { page: p };
+
+  switch (sectionId) {
+    case "trending-movies":
+      endpoint = "/trending/movie/day";
+      break;
+    case "trending-tv":
+      endpoint = "/trending/tv/day";
+      break;
+    case "now-playing":
+      endpoint = "/movie/now_playing";
+      break;
+    case "on-air":
+      endpoint = "/tv/on_the_air";
+      break;
+    case "popular-movies":
+      endpoint = "/movie/popular";
+      break;
+    case "popular-tv":
+      endpoint = "/tv/popular";
+      break;
+    case "top-rated-movies":
+      endpoint = "/movie/top_rated";
+      break;
+    case "top-rated-tv":
+      endpoint = "/tv/top_rated";
+      break;
+  }
+
+  const data = await fetchTMDB(endpoint, params);
+  return {
+    results: data.results as MediaItem[],
+    totalPages: Math.min(data.total_pages ?? 1, 20), // cap at 20 pages (400 items)
+  };
+}
