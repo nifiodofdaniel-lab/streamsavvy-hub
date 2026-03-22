@@ -1,7 +1,8 @@
 import { useRef } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronRight as ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import MediaCard from "./MediaCard";
-import { MediaItem } from "@/lib/tmdb";
+import { MediaItem, SectionId } from "@/lib/tmdb";
 import SkeletonCard from "./SkeletonCard";
 
 type Props = {
@@ -9,10 +10,12 @@ type Props = {
   items: MediaItem[];
   mediaType: "movie" | "tv" | "mixed";
   isLoading?: boolean;
+  sectionId?: SectionId;
 };
 
-export default function MediaRow({ title, items, mediaType, isLoading }: Props) {
+export default function MediaRow({ title, items, mediaType, isLoading, sectionId }: Props) {
   const rowRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   const scroll = (dir: "left" | "right") => {
     if (!rowRef.current) return;
@@ -23,7 +26,16 @@ export default function MediaRow({ title, items, mediaType, isLoading }: Props) 
     <section className="py-6">
       <div className="flex items-center justify-between mb-4 px-4 sm:px-6 max-w-7xl mx-auto">
         <h2 className="font-display text-2xl sm:text-3xl text-foreground tracking-wider">{title}</h2>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          {sectionId && (
+            <button
+              onClick={() => navigate(`/section/${sectionId}`)}
+              className="flex items-center gap-1.5 text-sm text-gold hover:text-gold/80 font-medium transition-colors px-3 py-1.5 rounded-full bg-gold/10 hover:bg-gold/20 border border-gold/20"
+            >
+              See More
+              <ArrowRight size={14} />
+            </button>
+          )}
           <button
             onClick={() => scroll("left")}
             className="w-8 h-8 rounded-full bg-muted hover:bg-primary/20 hover:text-gold border border-border transition-all flex items-center justify-center text-muted-foreground"
