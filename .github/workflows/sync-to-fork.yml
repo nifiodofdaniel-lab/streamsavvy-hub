@@ -1,0 +1,25 @@
+name: Sync to Fork (Daniel's Repo)
+ 
+on:
+  push:
+    branches:
+      - main
+ 
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout owner's repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+ 
+      - name: Push to Daniel's repo
+        env:
+          FORK_REPO_URL: ${{ secrets.FORK_REPO_URL }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote add fork $FORK_REPO_URL
+          git push fork main
+ 
