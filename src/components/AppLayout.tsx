@@ -1,10 +1,13 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Film, Tv, User, Menu } from "lucide-react";
+import { Search, Film, Tv, User, Menu, Clock, X } from "lucide-react";
 import AppSidebar from "./AppSidebar";
 import { cn } from "@/lib/utils";
-import { searchMulti, getPosterUrl, getTitle, MediaItem } from "@/lib/tmdb";
+import { MediaItem } from "@/lib/tmdb";
 import { IMG_BASE } from "@/lib/tmdb";
+
+const HISTORY_KEY = "cinetrack_search_history";
+const MAX_HISTORY = 10;
 
 interface SuggestionItem extends MediaItem {
   profile_path?: string | null;
@@ -14,12 +17,34 @@ interface Props {
   children: React.ReactNode;
 }
 
+function loadHistory(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory(history: string[]) {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+}
+
+function addToHistory(term: string) {
+  const trimmed = term.trim();
+  if (!trimmed) return;
+  const current = loadHistory().filter((h) => h.toLowerCase() !== trimmed.toLowerCase());
+  const updated = [trimmed, ...current].slice(0, MAX_HISTORY);
+  saveHistory(updated);
+}
+
 export default function AppLayout({ children }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [history, setHistory] = useState<string[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -48,11 +73,12 @@ export default function AppLayout({ children }: Props) {
     });
   }, [debouncedQuery]);
 
-  // Click outside closes dropdown
+  // Click outside closes dropdown and history
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setShowDropdown(false);
+        setShowHistory(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -65,17 +91,28 @@ export default function AppLayout({ children }: Props) {
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
 
+  const runSearch = useCallback((term: string) => {
+    const trimmed = term.trim();
+    if (!trimmed) return;
+    addToHistory(trimmed);
+    setHistory(loadHistory());
+    setShowDropdown(false);
+    setShowHistory(false);
+    navigate(`/search?q=${encodeURIComponent(trimmed)}`);
+    setSearchQuery("");
+  }, [navigate]);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      setShowDropdown(false);
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery("");
-    }
+    runSearch(searchQuery);
   };
 
   const handleSuggestionClick = (item: SuggestionItem) => {
+    const title = getDisplayTitle(item);
+    addToHistory(title);
+    setHistory(loadHistory());
     setShowDropdown(false);
+    setShowHistory(false);
     setSearchQuery("");
     if (item.media_type === "movie") {
       navigate(`/movie/${item.id}`);
@@ -84,6 +121,35 @@ export default function AppLayout({ children }: Props) {
     } else {
       const name = (item as any).name || "";
       navigate(`/search?q=${encodeURIComponent(name)}`);
+    }
+  };
+
+  const handleHistorySelect = (term: string) => {
+    setSearchQuery(term);
+    runSearch(term);
+  };
+
+  const handleDeleteHistoryItem = (term: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = loadHistory().filter((h) => h !== term);
+    saveHistory(updated);
+    setHistory(updated);
+  };
+
+  const handleClearHistory = () => {
+    saveHistory([]);
+    setHistory([]);
+    setShowHistory(false);
+  };
+
+  const handleFocus = () => {
+    // Only show history if the user hasn't typed anything yet
+    if (!searchQuery.trim()) {
+      const h = loadHistory();
+      setHistory(h);
+      if (h.length > 0) setShowHistory(true);
+    } else if (suggestions.length > 0) {
+      setShowDropdown(true);
     }
   };
 
@@ -156,12 +222,20 @@ export default function AppLayout({ children }: Props) {
                 placeholder="Search movies, shows, actors…"
                 value={searchQuery}
                 onChange={e => {
-                  setSearchQuery(e.target.value);
-                  if (!e.target.value.trim()) setShowDropdown(false);
+                  const val = e.target.value;
+                  setSearchQuery(val);
+                  if (!val.trim()) {
+                    setShowDropdown(false);
+                    // Re-show history if field becomes empty
+                    const h = loadHistory();
+                    setHistory(h);
+                    if (h.length > 0) setShowHistory(true);
+                  } else {
+                    // User is typing — hide history, autocomplete takes over
+                    setShowHistory(false);
+                  }
                 }}
-                onFocus={() => {
-                  if (suggestions.length > 0) setShowDropdown(true);
-                }}
+                onFocus={handleFocus}
                 className="w-full bg-muted/50 border border-border/40 rounded-full pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold/50 focus:bg-muted/70 transition-all"
               />
               {isLoadingSuggestions && (
@@ -172,7 +246,57 @@ export default function AppLayout({ children }: Props) {
             </div>
           </form>
 
-          {/* Autocomplete dropdown */}
+          {/* Search History Dropdown */}
+          {showHistory && !searchQuery.trim() && history.length > 0 && (
+            <div className="absolute top-full mt-2 left-0 right-0 bg-card border border-border/40 rounded-2xl shadow-2xl overflow-hidden z-50">
+              <div className="px-4 py-2.5 border-b border-border/20 flex items-center justify-between">
+                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Recent Searches</span>
+              </div>
+              <ul>
+                {history.map((term) => (
+                  <li key={term}>
+                    <button
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleHistorySelect(term);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors text-left group"
+                    >
+                      <Clock size={14} className="text-muted-foreground flex-shrink-0" />
+                      <span className="flex-1 text-sm text-foreground group-hover:text-gold transition-colors truncate">
+                        {term}
+                      </span>
+                      <span
+                        role="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleDeleteHistoryItem(term, e as any);
+                        }}
+                        className="p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100"
+                        aria-label={`Remove ${term} from history`}
+                      >
+                        <X size={12} />
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <div className="px-4 py-2.5 border-t border-border/20">
+                <button
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    handleClearHistory();
+                  }}
+                  className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  Clear all history
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Autocomplete Dropdown */}
           {showDropdown && suggestions.length > 0 && (
             <div className="absolute top-full mt-2 left-0 right-0 bg-card border border-border/40 rounded-2xl shadow-2xl overflow-hidden z-50">
               <ul>
@@ -216,9 +340,7 @@ export default function AppLayout({ children }: Props) {
                 <button
                   onMouseDown={(e) => {
                     e.preventDefault();
-                    setShowDropdown(false);
-                    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-                    setSearchQuery("");
+                    runSearch(searchQuery);
                   }}
                   className="text-xs text-muted-foreground hover:text-gold transition-colors w-full text-left"
                 >
